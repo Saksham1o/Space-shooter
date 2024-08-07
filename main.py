@@ -407,3 +407,103 @@ while running:
         all_sprites = pygame.sprite.Group()
         player = Player()
         all_sprites.add(player)
+
+
+        mobs = pygame.sprite.Group()
+        for i in range(8):      ## 8 mobs
+            mob_element = Mob()
+            all_sprites.add(mob_element)
+            mobs.add(mob_element)
+            newmob()
+
+        ## group for bullets
+        bullets = pygame.sprite.Group()
+        powerups = pygame.sprite.Group()
+
+        # Scroe
+        score = 0
+
+    #1 Process input
+    clock.tick(FPS)    
+    for event in pygame.event.get():       
+        
+        if event.type == pygame.QUIT:
+            running = False
+
+        if event.type == pygame.KEYDOWN:
+            if event.key == pygame.K_ESCAPE:
+                running = False
+        
+
+    
+    all_sprites.update()
+
+
+    ## check if a bullet hit a mob
+
+    hits = pygame.sprite.groupcollide(mobs, bullets, True, True)
+    ## now as we delete the mob element when we hit one with a bullet, we need to respawn them again
+    ## as there will be no mob_elements left out
+    for hit in hits:
+        score += 50 - hit.radius        
+        random.choice(expl_sounds).play()
+        # m = Mob()
+        # all_sprites.add(m)
+        # mobs.add(m)
+        expl = Explosion(hit.rect.center, 'lg')
+        all_sprites.add(expl)
+        if random.random() > 0.9:
+            pow = Pow(hit.rect.center)
+            all_sprites.add(pow)
+            powerups.add(pow)
+        newmob()      
+
+    
+    # Next
+
+    ## check if the player collides with the mob
+    hits = pygame.sprite.spritecollide(player, mobs, True, pygame.sprite.collide_circle)        ## gives back a list, True makes the mob element disappear
+    for hit in hits:
+        player.shield -= hit.radius * 2
+        expl = Explosion(hit.rect.center, 'sm')
+        all_sprites.add(expl)
+        newmob()
+        if player.shield <= 0:
+            player_die_sound.play()
+            death_explosion = Explosion(player.rect.center, 'player')
+            all_sprites.add(death_explosion)
+            # running = False     ## GAME OVER 3:D
+            player.hide()
+            player.lives -= 1
+            player.shield = 100
+
+    ## if the player hit a power up
+    hits = pygame.sprite.spritecollide(player, powerups, True)
+    for hit in hits:
+        if hit.type == 'shield':
+            player.shield += random.randrange(10, 30)
+            if player.shield >= 100:
+                player.shield = 100
+        if hit.type == 'gun':
+            player.powerup()
+
+    ## if player died and the explosion has finished, end game
+    if player.lives == 0 and not death_explosion.alive():
+        running = False
+        # menu_display = True
+        # pygame.display.update()
+
+    
+    screen.fill(BLACK)
+    screen.blit(background, background_rect)
+
+    all_sprites.draw(screen)
+    draw_text(screen, str(score), 18, WIDTH / 2, 10)     
+    draw_shield_bar(screen, 5, 5, player.shield)
+
+    
+    draw_lives(screen, WIDTH - 100, 5, player.lives, player_mini_img)
+ 
+    pygame.display.flip()
+
+pygame.quit()
