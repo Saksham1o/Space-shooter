@@ -7,7 +7,7 @@ from os import path
 img_dir = path.join(path.dirname(__file__), 'img')
 sound_folder = path.join(path.dirname(__file__), 'sounds')
 
-###############################
+#--------------------------------------------------
 WIDTH = 480
 HEIGHT = 600
 FPS = 60
@@ -22,15 +22,14 @@ RED = (255, 0, 0)
 GREEN = (0, 255, 0)
 BLUE = (0, 0, 255)
 YELLOW = (255, 255, 0)
-###############################
 
 
 ## initialize pygame and create window
 pygame.init()
-pygame.mixer.init()  ## For sound
+pygame.mixer.init() 
 screen = pygame.display.set_mode((WIDTH, HEIGHT))
 pygame.display.set_caption("Space Shooter")
-clock = pygame.time.Clock()     ## For syncing the FPS
+clock = pygame.time.Clock()   
 ###############################
 
 font_name = pygame.font.match_font('arial')
@@ -301,3 +300,110 @@ class Bullet(pygame.sprite.Sprite):
         self.rect.y += self.speedy
         if self.rect.bottom < 0:
             self.kill()
+
+
+
+# MISSILES
+class Missile(pygame.sprite.Sprite):
+
+    def __init__(self, x, y):
+        pygame.sprite.Sprite.__init__(self)
+        self.image = missile_img
+        self.image.set_colorkey(BLACK)
+        self.rect = self.image.get_rect()
+        self.rect.bottom = y
+        self.rect.centerx = x
+        self.speedy = -10
+
+    def update(self):
+        """should spawn right in front of the player"""
+        self.rect.y += self.speedy
+        if self.rect.bottom < 0:
+            self.kill()
+
+
+#------------------------------------------------------------------------------------
+# Loading all imagese
+background = pygame.image.load(path.join(img_dir, "C:\\Users\\Saksham\\Desktop\\git27\\Space-shooter\\img\\starfield.png")).convert()
+background_rect = background.get_rect()
+
+player_img = pygame.image.load(path.join(img_dir, "C:\\Users\\Saksham\\Desktop\\git27\\Space-shooter\\img\\playerShip1_orange.png")).convert()
+player_mini_img = pygame.transform.scale(player_img, (25, 19))
+player_mini_img.set_colorkey(BLACK)
+
+bullet_img = pygame.image.load(path.join(img_dir, "C:\\Users\\Saksham\\Desktop\\git27\\Space-shooter\\img\\laserRed16.png")).convert()
+missile_img = pygame.image.load(path.join(img_dir, "C:\\Users\\Saksham\\Desktop\\git27\\Space-shooter\\img\\missile.png")).convert_alpha()
+meteor_images = []
+meteor_list = [
+    'meteorBrown_big1.png',
+    'meteorBrown_big2.png',
+    'meteorBrown_med1.png',
+    'meteorBrown_med3.png',
+    'meteorBrown_small1.png',
+    'meteorBrown_small2.png',
+    'meteorBrown_tiny1.png'
+]
+
+for image in meteor_list:
+    meteor_images.append(pygame.image.load(path.join(img_dir, image)).convert())
+
+explosion_anim = {}
+explosion_anim['lg'] = []
+explosion_anim['sm'] = []
+explosion_anim['player'] = []
+for i in range(9):
+    filename = 'regularExplosion0{}.png'.format(i)
+    img = pygame.image.load(path.join(img_dir, filename)).convert()
+    img.set_colorkey(BLACK)
+
+    img_lg = pygame.transform.scale(img, (75, 75))
+    explosion_anim['lg'].append(img_lg)
+
+    img_sm = pygame.transform.scale(img, (32, 32))
+    explosion_anim['sm'].append(img_sm)
+
+
+    filename = 'sonicExplosion0{}.png'.format(i)
+    img = pygame.image.load(path.join(img_dir, filename)).convert()
+    img.set_colorkey(BLACK)
+    explosion_anim['player'].append(img)
+
+
+powerup_images = {}
+powerup_images['shield'] = pygame.image.load(path.join(img_dir, "C:\\Users\\Saksham\\Desktop\\git27\\Space-shooter\\img\\shield_gold.png")).convert()
+powerup_images['gun'] = pygame.image.load(path.join(img_dir, "C:\\Users\\Saksham\\Desktop\\git27\\Space-shooter\\img\\bolt_gold.png")).convert()
+
+
+# Loading game sounds
+shooting_sound = pygame.mixer.Sound(path.join(sound_folder, "C:\\Users\\Saksham\\Desktop\\git27\\Space-shooter\\sounds\\pew.wav"))
+missile_sound = pygame.mixer.Sound(path.join(sound_folder, "C:\\Users\\Saksham\\Desktop\\git27\\Space-shooter\\sounds\\rocket.ogg"))
+expl_sounds = []
+for sound in ['expl3.wav', 'expl6.wav']:
+    expl_sounds.append(pygame.mixer.Sound(path.join(sound_folder, sound)))
+
+
+
+pygame.mixer.music.set_volume(0.2) 
+player_die_sound = pygame.mixer.Sound(path.join(sound_folder, "C:\\Users\\Saksham\\Desktop\\git27\\Space-shooter\\sounds\\rumble1.ogg"))
+
+# make the game music loop over again and again.
+# play(loops=-1) is not working
+#pygame.mixer.music.play()
+## Game loop
+
+running = True
+menu_display = True
+while running:
+    if menu_display:
+        main_menu()
+        pygame.time.wait(3000)
+
+        pygame.mixer.music.stop()
+        #Play the gameplay music
+        pygame.mixer.music.load(path.join(sound_folder, "C:\\Users\\Saksham\\Desktop\\git27\\Space-shooter\\sounds\\tgfcoder-FrozenJam-SeamlessLoop.ogg"))
+        pygame.mixer.music.play(-1)
+
+        menu_display = False
+        all_sprites = pygame.sprite.Group()
+        player = Player()
+        all_sprites.add(player)
